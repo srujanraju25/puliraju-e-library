@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover books, read online with an immersive page-turning reader, and download PDFs.">
+  <meta name="theme-color" content="#171713">
+  <title>Between the Pages — Digital Library</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
+  <script defer src="books.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="Between the Pages home"><span class="brand-mark">B.</span><span>BETWEEN THE PAGES</span></a>
+    <nav><a href="#library">Library</a><a href="#about">About</a></nav>
+    <a class="header-cta" href="#library">Explore books <span>↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">A QUIETER CORNER OF THE INTERNET</p>
+        <h1>Every book<br>opens <em>a world.</em></h1>
+        <p class="hero-description">Discover stories, explore ideas, and take your time turning the next page.</p>
+        <a class="primary-button" href="#library">Explore the library <span>→</span></a>
+        <p class="hero-note">READ ONLINE · DOWNLOAD PDF · RETURN ANYTIME</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="book-object"><div class="book-cover"><span>THE<br>ART OF<br>GETTING<br>LOST</span><small>A BOOK IS A JOURNEY</small></div><div class="book-pages"></div></div>
+        <div class="hero-caption">YOUR NEXT CHAPTER<br>IS WAITING</div>
+      </div>
+    </section>
+
+    <section class="library-section" id="library">
+      <div class="section-heading">
+        <div><p class="eyebrow">THE COLLECTION</p><h2>Find your next read.</h2></div>
+        <p class="section-intro">A growing collection of books, ready to be explored.</p>
+      </div>
+      <div class="toolbar">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search titles, authors or genres…" aria-label="Search books"></label>
+        <select id="genreFilter" aria-label="Filter by genre"><option value="all">All genres</option></select>
+      </div>
+      <div id="bookGrid" class="book-grid" aria-live="polite"></div>
+      <p id="emptyState" class="empty-state" hidden>No books match your search yet.</p>
+    </section>
+
+    <section class="about-section" id="about">
+      <p class="eyebrow">A NOTE TO READERS</p>
+      <h2>Made for the love<br>of <em>reading.</em></h2>
+      <p>This independent digital library brings books together in one welcoming place. Open a book, turn its pages, and enjoy the story at your own pace.</p>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="#"><span class="brand-mark">B.</span><span>BETWEEN THE PAGES</span></a><span>© <span id="year"></span> · Made for readers.</span></footer>
+
+  <div class="reader-modal" id="readerModal" aria-hidden="true">
+    <div class="reader-topbar">
+      <div><p class="eyebrow">NOW READING</p><h2 id="readerTitle">Book title</h2></div>
+      <div class="reader-actions"><a id="downloadButton" class="download-button" href="#" download>↓ Download PDF</a><button id="closeReader" class="icon-button" aria-label="Close reader">✕</button></div>
+    </div>
+    <div class="reader-stage">
+      <p id="readerMessage" class="reader-message">Preparing your book…</p>
+      <div id="flipbook" class="flipbook"></div>
+    </div>
+    <div class="reader-controls">
+      <button id="prevPage" class="reader-control">← Previous</button>
+      <span id="pageCounter">—</span>
+      <button id="nextPage" class="reader-control">Next →</button>
+    </div>
+    <p class="reader-footnote">For the best experience, rotate your phone to landscape.</p>
+  </div>
+</body>
+</html>
