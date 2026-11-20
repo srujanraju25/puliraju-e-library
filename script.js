@@ -1,118 +1,29 @@
-const $ = (s) => document.querySelector(s);
-const grid = $("#bookGrid");
-const searchInput = $("#searchInput");
-const genreFilter = $("#genreFilter");
-const modal = $("#readerModal");
-let pageFlip = null;
-let pdfDocument = null;
-let currentBook = null;
-
-$("#year").textContent = new Date().getFullYear();
-
-function safeText(value="") {
-  return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-function initGenres() {
-  const genres = [...new Set((window.BOOKS || []).map(b => b.genre).filter(Boolean))].sort();
-  genres.forEach(g => {
-    const option = document.createElement("option");
-    option.value = g; option.textContent = g; genreFilter.append(option);
-  });
-}
-function renderBooks() {
-  const query = searchInput.value.trim().toLowerCase();
-  const genre = genreFilter.value;
-  const books = (window.BOOKS || []).filter(b => {
-    const haystack = [b.title,b.author,b.genre,b.description].join(" ").toLowerCase();
-    return (!query || haystack.includes(query)) && (genre === "all" || b.genre === genre);
-  });
-  grid.innerHTML = books.map((b, i) => `
-    <article class="book-card">
-      <div class="cover-wrap">
-        ${b.coverUrl ? `<img src="${safeText(b.coverUrl)}" alt="Cover of ${safeText(b.title)}" loading="lazy">` : `<div class="cover-placeholder">${safeText(b.title)}<small>${safeText(b.author || "AUTHOR")}</small></div>`}
-      </div>
-      <div class="book-meta">
-        <h3>${safeText(b.title)}</h3>
-        <div class="book-author">${safeText(b.author || "Author not specified")} · ${safeText(b.genre || "Uncategorised")}</div>
-        <p class="book-description">${safeText(b.description || "")}</p>
-        <div class="card-actions">
-          <button type="button" data-read="${safeText(b.id)}" ${b.pdfUrl ? "" : "disabled title='Add a PDF URL in books.js first'"}>Read online</button>
-          ${b.pdfUrl ? `<a class="secondary" href="${safeText(b.pdfUrl)}" download>Download PDF</a>` : `<button class="secondary" disabled title="Add a PDF URL in books.js first">PDF coming soon</button>`}
-        </div>
-      </div>
-    </article>`).join("");
-  $("#emptyState").hidden = books.length !== 0;
-  grid.querySelectorAll("[data-read]").forEach(btn => btn.addEventListener("click", () => {
-    const book = (window.BOOKS || []).find(b => b.id === btn.dataset.read);
-    if (book) openReader(book);
-  }));
-}
-searchInput.addEventListener("input", renderBooks);
-genreFilter.addEventListener("change", renderBooks);
-initGenres(); renderBooks();
-
-async function openReader(book) {
-  currentBook = book;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden","false");
-  document.body.style.overflow = "hidden";
-  $("#readerTitle").textContent = book.title;
-  $("#downloadButton").href = book.pdfUrl;
-  $("#readerMessage").hidden = false;
-  $("#readerMessage").textContent = "Loading your book…";
-  $("#flipbook").innerHTML = "";
-  $("#pageCounter").textContent = "Loading…";
-  $("#prevPage").disabled = true; $("#nextPage").disabled = true;
-  try {
-    if (!window.pdfjsLib || !window.St || !window.St.PageFlip) {
-      throw new Error("Reader libraries did not load. Check your internet connection and try again.");
-    }
-    if (pageFlip) { try { pageFlip.destroy(); } catch(e) {} pageFlip = null; }
-    const loadingTask = window.pdfjsLib.getDocument({url: book.pdfUrl});
-    pdfDocument = await loadingTask.promise;
-    const images = [];
-    for (let n=1; n<=pdfDocument.numPages; n++) {
-      $("#readerMessage").textContent = `Preparing page ${n} of ${pdfDocument.numPages}…`;
-      const page = await pdfDocument.getPage(n);
-      const viewport = page.getViewport({scale:1.25});
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
-      await page.render({canvasContext:context, viewport}).promise;
-      images.push(canvas.toDataURL("image/jpeg",0.88));
-    }
-    const stage = $("#flipbook");
-    const width = Math.min(440, Math.max(260, Math.floor(window.innerWidth * 0.39)));
-    const height = Math.min(620, Math.floor(window.innerHeight * 0.68));
-    pageFlip = new window.St.PageFlip(stage, {
-      width, height, size:"stretch", minWidth:240, maxWidth:440,
-      minHeight:320, maxHeight:620, maxShadowOpacity:0.45,
-      showCover:true, mobileScrollSupport:false, usePortrait:true
-    });
-    pageFlip.loadFromImages(images);
-    $("#readerMessage").hidden = true;
-    updatePageCounter();
-    $("#prevPage").disabled = false; $("#nextPage").disabled = false;
-    pageFlip.on("flip", updatePageCounter);
-  } catch (err) {
-    console.error(err);
-    $("#readerMessage").hidden = false;
-    $("#readerMessage").textContent = `Could not open this PDF: ${err.message}. Check that the PDF URL is public and allows cross-origin access (CORS).`;
-    $("#pageCounter").textContent = "Reader unavailable";
-  }
-}
-function updatePageCounter() {
-  if (!pageFlip || !pdfDocument) return;
-  const current = pageFlip.getCurrentPageIndex()+1;
-  $("#pageCounter").textContent = `Page ${current} of ${pdfDocument.numPages}`;
-}
-$("#prevPage").addEventListener("click",()=>pageFlip?.flipPrev());
-$("#nextPage").addEventListener("click",()=>pageFlip?.flipNext());
-function closeReader() {
-  modal.classList.remove("open"); modal.setAttribute("aria-hidden","true");
-  document.body.style.overflow = "";
-  if (pageFlip) { try {pageFlip.destroy();} catch(e){} pageFlip=null; }
-  $("#flipbook").innerHTML = "";
-}
-$("#closeReader").addEventListener("click",closeReader);
-document.addEventListener("keydown",e=>{if(e.key==="Escape" && modal.classList.contains("open")) closeReader();});
+const langButton=document.getElementById('languageSwitch');
+let currentLang='en';
+langButton.addEventListener('click',()=>{
+  currentLang=currentLang==='en'?'te':'en'; document.documentElement.lang=currentLang;
+  document.querySelectorAll('[data-en][data-te]').forEach(el=>{el.innerHTML=el.dataset[currentLang]});
+  langButton.textContent=currentLang==='en'?'తెలుగు':'English';
+  document.getElementById('bookSearch').placeholder=currentLang==='en'?'Search by book title...':'పుస్తకం పేరుతో వెతకండి...';
+  updateCount();
+});
+const search=document.getElementById('bookSearch');
+const cards=[...document.querySelectorAll('.book-card')];
+function updateCount(){const visible=cards.filter(c=>!c.hidden).length;document.getElementById('bookCount').textContent=`${visible} ${currentLang==='en'?'BOOKS':'పుస్తకాలు'}`;document.getElementById('noResults').hidden=visible!==0;}
+search.addEventListener('input',()=>{const term=search.value.trim().toLocaleLowerCase();cards.forEach(card=>card.hidden=!card.dataset.title.toLocaleLowerCase().includes(term));updateCount();});
+const books={
+  1:{title:'రైతు ఆత్మహత్యల గోస',cover:'assets/book-1-cover.jpeg',descEn:'A 376-page Telugu book documenting the experiences of farming families affected by farmer suicides. The PDF supplied for this preview includes publication details for 2023 and 2024.',descTe:'రైతు ఆత్మహత్యలతో ప్రభావితమైన రైతు కుటుంబాల అనుభవాలను నమోదు చేసిన 376 పేజీల తెలుగు పుస్తకం. ఈ ప్రివ్యూకు అందించిన PDFలో 2023, 2024 ముద్రణ వివరాలు ఉన్నాయి.',pdf:'assets/rythu-atmahatyala-gosa.pdf'},
+  2:{title:'ఆత్మహత్యల గోస',cover:'assets/book-2-cover.jpeg',descEn:'The original cover image is added. The book description and PDF will be connected after you share the remaining file.',descTe:'అసలు పుస్తక కవర్ జోడించాం. మిగిలిన PDF అందిన తర్వాత పుస్తక వివరణ, చదివే సదుపాయం జోడిస్తాం.'},
+  3:{title:'కన్నీళ్ల సాగరం',cover:'assets/book-3-cover.jpeg',descEn:'The original cover image is added. The book description and PDF will be connected after you share the remaining file.',descTe:'అసలు పుస్తక కవర్ జోడించాం. మిగిలిన PDF అందిన తర్వాత పుస్తక వివరణ, చదివే సదుపాయం జోడిస్తాం.'}
+};
+const dialog=document.getElementById('bookDialog');
+document.querySelectorAll('.details-button').forEach(button=>button.addEventListener('click',()=>{
+  const b=books[button.dataset.book]; const ready=!!b.pdf;
+  document.getElementById('dialogContent').innerHTML=`<div class="detail-layout"><img src="${b.cover}" alt="${b.title} cover"><div><p class="section-kicker">${currentLang==='en'?'BOOK DETAILS':'పుస్తక వివరాలు'}</p><h2>${b.title}</h2><p>${currentLang==='en'?b.descEn:b.descTe}</p>${ready?`<div class="dialog-actions"><a class="dialog-action" href="${b.pdf}" target="_blank" rel="noopener">${currentLang==='en'?'Read Online':'ఆన్‌లైన్‌లో చదవండి'}</a><a class="dialog-action secondary-action" href="${b.pdf}" download>${currentLang==='en'?'Download PDF':'PDF డౌన్‌లోడ్'}</a></div>`:`<p class="placeholder-note">${currentLang==='en'?'PDF not added yet — this will be connected when you upload it.':'PDF ఇంకా జోడించలేదు — మీరు అప్‌లోడ్ చేసిన తర్వాత కలుపుతాం.'}</p>`}</div></div>`;
+  dialog.showModal();
+}));
+document.getElementById('dialogClose').addEventListener('click',()=>dialog.close());
+dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
+document.getElementById('menuToggle').addEventListener('click',()=>document.getElementById('navigation').classList.toggle('open'));
+document.querySelectorAll('#navigation a').forEach(a=>a.addEventListener('click',()=>document.getElementById('navigation').classList.remove('open')));
+document.getElementById('year').textContent=new Date().getFullYear();
