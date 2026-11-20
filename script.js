@@ -2,10 +2,47 @@
 const langButton = document.getElementById('languageSwitch');
 let currentLang = 'en';
 
+// Google Drive PDF configuration
+const books = {
+  1: {
+    title: 'రైతు ఆత్మహత్యల గోస',
+    cover: 'assets/book-1-cover.jpeg',
+    descEn: 'A Telugu book documenting the experiences of farming families affected by farmer suicides.',
+    descTe: 'రైతు ఆత్మహత్యలతో ప్రభావితమైన రైతు కుటుంబాల అనుభవాలను నమోదు చేసిన తెలుగు పుస్తకం.',
+    id: '1o2hLoj2qwso_rHy0gZPDNhWvesB4BfvB'
+  },
+
+  2: {
+    title: 'ఆత్మహత్యల గోస',
+    cover: 'assets/book-2-cover.jpeg',
+    descEn: 'Read the original Telugu book by Puli Raju.',
+    descTe: 'పులి రాజు రచించిన తెలుగు పుస్తకాన్ని చదవండి.',
+    id: '11vWtUbPdrPTIuhDNzeqMUm_I-5nT4NUk'
+  },
+
+  3: {
+    title: 'కన్నీళ్ల సాగరం',
+    cover: 'assets/book-3-cover.jpeg',
+    descEn: 'Read the original Telugu book by Puli Raju.',
+    descTe: 'పులి రాజు రచించిన తెలుగు పుస్తకాన్ని చదవండి.',
+    id: '1XeFXW1fxNeX1x1Lr3FQAklkU2T0oi3Jz'
+  }
+};
+
+// Generate Google Drive links
+function getPreviewURL(id) {
+  return `https://drive.google.com/file/d/${id}/preview`;
+}
+
+function getDownloadURL(id) {
+  return `https://drive.google.com/uc?export=download&id=${id}`;
+}
+
 // Language switch
 if (langButton) {
   langButton.addEventListener('click', () => {
     currentLang = currentLang === 'en' ? 'te' : 'en';
+
     document.documentElement.lang = currentLang;
 
     document.querySelectorAll('[data-en][data-te]').forEach(el => {
@@ -15,9 +52,10 @@ if (langButton) {
     langButton.textContent =
       currentLang === 'en' ? 'తెలుగు' : 'English';
 
-    const searchInput = document.getElementById('bookSearch');
-    if (searchInput) {
-      searchInput.placeholder =
+    const search = document.getElementById('bookSearch');
+
+    if (search) {
+      search.placeholder =
         currentLang === 'en'
           ? 'Search by book title...'
           : 'పుస్తకం పేరుతో వెతకండి...';
@@ -28,30 +66,32 @@ if (langButton) {
 }
 
 // Book search
-const search = document.getElementById('bookSearch');
+const searchInput = document.getElementById('bookSearch');
 const cards = [...document.querySelectorAll('.book-card')];
 
 function updateCount() {
   const visible = cards.filter(card => !card.hidden).length;
 
   const count = document.getElementById('bookCount');
+
   if (count) {
     count.textContent =
       `${visible} ${currentLang === 'en' ? 'BOOKS' : 'పుస్తకాలు'}`;
   }
 
   const noResults = document.getElementById('noResults');
+
   if (noResults) {
     noResults.hidden = visible !== 0;
   }
 }
 
-if (search) {
-  search.addEventListener('input', () => {
-    const term = search.value.trim().toLocaleLowerCase();
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    const term = searchInput.value.trim().toLowerCase();
 
     cards.forEach(card => {
-      const title = (card.dataset.title || '').toLocaleLowerCase();
+      const title = (card.dataset.title || '').toLowerCase();
       card.hidden = !title.includes(term);
     });
 
@@ -59,34 +99,7 @@ if (search) {
   });
 }
 
-// Book information and PDF links
-const books = {
-  1: {
-    title: 'రైతు ఆత్మహత్యల గోస',
-    cover: 'assets/book-1-cover.jpeg',
-    descEn: 'A Telugu book documenting the experiences of farming families affected by farmer suicides.',
-    descTe: 'రైతు ఆత్మహత్యలతో ప్రభావితమైన రైతు కుటుంబాల అనుభవాలను నమోదు చేసిన తెలుగు పుస్తకం.',
-    pdf: 'https://github.com/srujanraju25/puliraju-e-library/releases/download/v1.0-books/Final.rythu.gosa.pdf'
-  },
-
-  2: {
-    title: 'ఆత్మహత్యల గోస',
-    cover: 'assets/book-2-cover.jpeg',
-    descEn: 'Read the original Telugu book online or download its PDF.',
-    descTe: 'ఈ తెలుగు పుస్తకాన్ని ఆన్‌లైన్‌లో చదవవచ్చు లేదా PDF డౌన్‌లోడ్ చేసుకోవచ్చు.',
-    pdf: 'https://github.com/srujanraju25/puliraju-e-library/releases/download/v1.0-books/default.pdf'
-  },
-
-  3: {
-    title: 'కన్నీళ్ల సాగరం',
-    cover: 'assets/book-3-cover.jpeg',
-    descEn: 'Read the original Telugu book online or download its PDF.',
-    descTe: 'ఈ తెలుగు పుస్తకాన్ని ఆన్‌లైన్‌లో చదవవచ్చు లేదా PDF డౌన్‌లోడ్ చేసుకోవచ్చు.',
-    pdf: 'https://github.com/srujanraju25/puliraju-e-library/releases/download/v1.0-books/Kannella.Sagaram_Inner_For.Print_27_02_26.copy.pdf'
-  }
-};
-
-// Book details dialog
+// Book details
 const dialog = document.getElementById('bookDialog');
 
 document.querySelectorAll('.details-button').forEach(button => {
@@ -95,14 +108,16 @@ document.querySelectorAll('.details-button').forEach(button => {
 
     if (!book || !dialog) return;
 
-    // Google PDF viewer URL
-    const viewerURL =
-      'https://docs.google.com/gview?embedded=1&url=' +
-      encodeURIComponent(book.pdf);
+    const previewURL = getPreviewURL(book.id);
+    const downloadURL = getDownloadURL(book.id);
 
     document.getElementById('dialogContent').innerHTML = `
       <div class="detail-layout">
-        <img src="${book.cover}" alt="${book.title} cover">
+
+        <img
+          src="${book.cover}"
+          alt="${book.title} cover"
+        >
 
         <div>
           <p class="section-kicker">
@@ -117,18 +132,26 @@ document.querySelectorAll('.details-button').forEach(button => {
 
           <div class="dialog-actions">
 
-            <a class="dialog-action"
-               href="${viewerURL}"
-               target="_blank"
-               rel="noopener noreferrer">
-              ${currentLang === 'en' ? 'Read Online' : 'ఆన్‌లైన్‌లో చదవండి'}
+            <a
+              class="dialog-action"
+              href="${previewURL}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ${currentLang === 'en'
+                ? 'Read Online'
+                : 'ఆన్‌లైన్‌లో చదవండి'}
             </a>
 
-            <a class="dialog-action secondary-action"
-               href="${book.pdf}"
-               target="_blank"
-               rel="noopener noreferrer">
-              ${currentLang === 'en' ? 'Download PDF' : 'PDF డౌన్‌లోడ్'}
+            <a
+              class="dialog-action secondary-action"
+              href="${downloadURL}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ${currentLang === 'en'
+                ? 'Download PDF'
+                : 'PDF డౌన్‌లోడ్'}
             </a>
 
           </div>
@@ -144,7 +167,9 @@ document.querySelectorAll('.details-button').forEach(button => {
 const closeButton = document.getElementById('dialogClose');
 
 if (closeButton && dialog) {
-  closeButton.addEventListener('click', () => dialog.close());
+  closeButton.addEventListener('click', () => {
+    dialog.close();
+  });
 
   dialog.addEventListener('click', event => {
     if (event.target === dialog) {
